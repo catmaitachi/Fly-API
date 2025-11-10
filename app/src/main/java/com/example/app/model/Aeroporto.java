@@ -6,13 +6,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Table(name = "aeroporto")
 @Entity
+@Table(name = "aeroporto")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -21,7 +22,7 @@ public class Aeroporto {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_aeroporto", nullable = false, unique = true)
-    private int id;
+    private Long id;
 
     @Column(name = "nome_aeroporto", nullable = false)
     private String nome;
