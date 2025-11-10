@@ -9,7 +9,7 @@ import com.example.app.model.Aeroporto;
 @Component
 public class AeroportoMapper {
 
-    public Aeroporto toEntity( AeroportoRequest r ) {
+    public static Aeroporto toEntity( AeroportoRequest r ) {
 
         Aeroporto a = new Aeroporto();
 
@@ -25,7 +25,7 @@ public class AeroportoMapper {
 
     }
 
-    public AeroportoResponse fromEntity( Aeroporto a ) {
+    public static AeroportoResponse fromEntity( Aeroporto a ) {
 
         AeroportoResponse r = new AeroportoResponse();
 
