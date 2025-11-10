@@ -29,6 +29,7 @@ public class AeroportoMapper {
 
         AeroportoResponse r = new AeroportoResponse();
 
+        r.setId( a.getId() );
         r.setNome( a.getNome() );
         r.setIata( a.getIata() );
         r.setCidade( a.getCidade() );

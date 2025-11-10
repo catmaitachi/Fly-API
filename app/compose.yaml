@@ -4,12 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     image: fly-api:local
-    environment:
-      - MYSQL_HOST=mysql
-      - MYSQL_DATABASE=flyapi
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=777
-      - APP_IMPORT_AIRPORTS_ENABLED=true
     ports:
       - "8080:8080"
     depends_on:
