@@ -4,7 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -27,9 +30,9 @@ public class AeroportosImport {
 
 		// ? Usa Resource para carregar o arquivo CSV 
 
-		Resource resource = new ClassPathResource(CSV_PATH);
+		Resource r = new ClassPathResource(CSV_PATH);
 
-		return leitor(resource);
+		return leitor(r);
 
 	}
 
@@ -57,16 +60,17 @@ public class AeroportosImport {
 
 				if (p.length < 9) continue; 
 
+				// ? Ignora caso algum campo obrigatório seja inválido
+
+				for ( int i = 1 ; i < 9 ; i++ ) if ( safe(p , i) == null ) continue;
+
 				String nome = safe(p, 1);
 				String cidade = safe(p, 2);
+				String paisNome = safe(p, 3);
 				String iata = safe(p, 4);
 				String latStr = safe(p, 6);
 				String lonStr = safe(p, 7);
 				String altStr = safe(p, 8);
-
-				// ? Ignora IATAs inválidos
-
-				if ( iata == null || iata.equalsIgnoreCase("\\N") || iata.length() != 3 ) continue;
 
 				String iataKey = iata.toUpperCase(Locale.ROOT);
 
@@ -74,11 +78,17 @@ public class AeroportosImport {
 
 				if ( Boolean.TRUE.equals( repo.existsByIata(iataKey) ) ) continue;
 
-				Double latitude = parseDouble(latStr);
-				Double longitude = parseDouble(lonStr);
-				Integer altitude = feetToMeters(altStr);
+				// ? Converte o nome do país para ISO2
 
-				if ( latitude == null || longitude == null || altitude == null ) continue;
+				String paisIso = countryIso2(paisNome);
+
+				if ( paisIso == null ) continue;
+
+				Double lat = parseDouble(latStr);
+				Double lon = parseDouble(lonStr);
+				Integer alt = feetToMeters(altStr);
+
+				if ( lat == null || lon == null || alt == null ) continue;
 
 				// ? Cria o objeto Aeroporto e salva no repositório
 
@@ -86,11 +96,11 @@ public class AeroportosImport {
 
 				a.setNome(nome);
 				a.setCidade(cidade);
-				a.setPais("XX"); 
+				a.setPais(paisIso);
 				a.setIata(iataKey);
-				a.setLatitude(latitude);
-				a.setLongitude(longitude);
-				a.setAltitude(altitude);
+				a.setLatitude(lat);
+				a.setLongitude(lon);
+				a.setAltitude(alt);
 
 				repo.save(a);
 				inseridos++;
@@ -100,6 +110,124 @@ public class AeroportosImport {
 		} catch ( IOException e ) { throw new RuntimeException("Erro ao importar aeroportos do CSV", e); }
 
 		return inseridos;
+
+	}
+
+	private static String countryIso2( String country ) {
+
+		// ? Valida entrada
+
+		String raw = country == null ? null : country.trim();
+
+		if ( raw == null || raw.isEmpty() ) return null;
+
+		String s = normalizar(raw);
+
+		// ? Se já veio em ISO2 e for válido, retorna upper-case
+
+		if ( s.length() == 2 ) {
+
+			String up = raw.trim().toUpperCase(Locale.ROOT);
+
+			if ( ISO_BY_NAME.containsValue(up) ) return up;
+
+		}
+
+		// ? Tenta converter ISO3 para ISO2
+
+		if ( s.length() == 3 ) {
+
+			String up3 = raw.trim().toUpperCase(Locale.ROOT);
+
+			for ( Map.Entry<String,String> e : ISO3_TO_ISO2.entrySet() ) if ( e.getKey().equals(up3) ) return e.getValue();
+			
+		}
+
+		// ? Converte nome normalizado para ISO2
+
+		String iso = ISO_BY_NAME.get(s);
+
+		if ( iso != null ) return iso;
+
+		// ? Não encontrado
+
+		return null;
+		
+	}
+
+	// ? Normaliza string: trim, lower-case root e remove acentos
+
+	private static String normalizar( String s ) {
+
+		String n = Normalizer.normalize( s, Normalizer.Form.NFD );
+
+		n = n.replaceAll("\\p{M}+", "");
+
+		return n.toLowerCase(Locale.ROOT).trim();
+
+	}
+
+	// ? Cria tabelas de mapeamento para países
+
+	private static final Map<String,String> ISO_BY_NAME = nameToIso();
+	private static final Map<String,String> ISO3_TO_ISO2 = iso3ToIso2();
+
+	private static Map<String,String> nameToIso() {
+
+		Map<String,String> map = new HashMap<>();
+
+		// ? De todos os países ISO conhecidos
+
+		for ( String code2 : Locale.getISOCountries() ) {
+
+			Locale loc = new Locale.Builder().setRegion(code2).build();
+
+			String nameEn = normalizar( loc.getDisplayCountry(Locale.ENGLISH) );
+			if ( !nameEn.isEmpty() ) map.put( nameEn, code2 );
+
+			String nameDef = normalizar( loc.getDisplayCountry() );
+			if ( !nameDef.isEmpty() ) map.putIfAbsent( nameDef, code2 );
+
+		}
+
+		// ! Exceções: nomes alternativos comuns que podem aparecer no CSV
+
+		map.put( normalizar("United States"), "US" );
+		map.put( normalizar("United States of America"), "US" );
+		map.put( normalizar("United Kingdom"), "GB" );
+		map.put( normalizar("South Korea"), "KR" );
+		map.put( normalizar("North Korea"), "KP" );
+		map.put( normalizar("Russia"), "RU" );
+		map.put( normalizar("Czech Republic"), "CZ" ); // Czechia
+		map.put( normalizar("Ivory Coast"), "CI" ); // Côte d'Ivoire
+		map.put( normalizar("Cape Verde"), "CV" ); // Cabo Verde
+		map.put( normalizar("Burma"), "MM" ); // Myanmar
+		map.put( normalizar("Vatican City"), "VA" ); // Holy See
+
+		return map;
+	}
+
+	// ? Mapeia códigos ISO3 para ISO2
+
+	private static Map<String,String> iso3ToIso2() {
+
+		Map<String,String> map = new HashMap<>();
+
+		for ( String code2 : Locale.getISOCountries() ) {
+			
+			try {
+
+				Locale loc = new Locale.Builder().setRegion(code2).build();
+
+				String iso3 = loc.getISO3Country();
+
+				if ( iso3 != null && !iso3.isEmpty() ) map.put( iso3.toUpperCase(Locale.ROOT), code2 );
+			
+			} catch ( Exception e ) {}
+
+		}
+
+		return map;
 
 	}
 
