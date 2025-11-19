@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
@@ -18,25 +19,30 @@ import lombok.Setter;
 @Setter
 public class AeroportoRequest {
 
-    @NotBlank @Size(max = 100)
+    @NotBlank(message = "O nome do aeroporto é obrigatório.")
+    @Size(max = 100, message = "O nome do aeroporto não pode exceder 100 caracteres.")
     private String nome;
 
-    @NotBlank @Size(min = 3, max = 3)
+    @NotBlank(message = "O código IATA é obrigatório.")
+    @Size(min = 3, max = 3, message = "O código IATA deve ter exatamente 3 caracteres.")
     private String iata;
 
-    @NotBlank @Size(max = 100)
+    @NotBlank(message = "O nome da cidade é obrigatório.")
+    @Size(max = 100, message = "O nome da cidade não pode exceder 100 caracteres.")
     private String cidade;
 
-    @NotBlank @Size(min = 2, max = 2)
+    @NotBlank(message = "O código do país é obrigatório.")
+    @Size(min = 2, max = 2, message = "O código do país deve ter exatamente 2 caracteres.")
     private String pais;
 
-    @NotNull
+    @NotNull(message = "A latitude é obrigatória.")
     private double latitude;
 
-    @NotNull
+    @NotNull(message = "A longitude é obrigatória.")
     private double longitude;
 
-    @NotNull
+    @NotNull(message = "A altitude é obrigatória.")
+    @Positive(message = "A altitude deve ser um número positivo.")
     private int altitude;
 
 }

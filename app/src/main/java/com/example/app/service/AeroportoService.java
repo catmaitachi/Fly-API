@@ -29,11 +29,7 @@ public class AeroportoService {
 
     public Aeroporto atualizar(String iata, Aeroporto novo) {
 
-        Optional<Aeroporto> aOpt = repo.findByIata(iata);
-
-        if ( aOpt.isPresent() ) {
-
-            Aeroporto atual = aOpt.get();
+        return repo.findByIata(iata).map(atual -> {
 
             atual.setNome(novo.getNome());
             atual.setIata(novo.getIata());
@@ -45,16 +41,10 @@ public class AeroportoService {
 
             return repo.save(atual);
 
-        } else return null;
+        }).orElse(null);
 
     }
 
-    public void deletar(String iata) {
-
-        Optional<Aeroporto> aOpt = repo.findByIata(iata);
-
-        aOpt.ifPresent(aeroporto -> repo.delete(aeroporto));
-
-    }
+    public void deletar(String iata) { repo.findByIata(iata).ifPresent(aeroporto -> repo.delete(aeroporto)); }
 
 }

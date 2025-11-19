@@ -1,7 +1,6 @@
 package com.example.app.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,18 +38,18 @@ public class AeroportoController {
         .map(AeroportoMapper::fromEntity)
         .toList();
 
-        return ResponseEntity.ok(aeroportos);
+        if ( aeroportos.isEmpty() ) return ResponseEntity.noContent().build();
+        else return ResponseEntity.ok(aeroportos);
 
     }
 
     @GetMapping("/{iata}")
     private ResponseEntity<AeroportoResponse> buscarPorIata( @PathVariable String iata ) {
 
-        Optional<Aeroporto> aeroporto = aeroportoService.buscar(iata);
-
-        if ( aeroporto.isPresent() ) return ResponseEntity.ok( AeroportoMapper.fromEntity(aeroporto.get()) );
-        else return ResponseEntity.notFound().build();
-
+        return aeroportoService.buscar(iata)
+            .map(aeroporto -> ResponseEntity.ok(AeroportoMapper.fromEntity(aeroporto)))
+            .orElse(ResponseEntity.notFound().build());
+        
     }
 
     @PostMapping
