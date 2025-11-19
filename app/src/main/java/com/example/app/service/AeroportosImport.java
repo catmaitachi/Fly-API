@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -26,9 +28,19 @@ public class AeroportosImport {
 
 	private final AeroportoRepository repo;
 
-	public long importarCsv() {
+	// ? Usa EventListener para iniciar a importação do CSV ao iniciar a aplicação
 
-		// ? Usa Resource para carregar o arquivo CSV 
+	@EventListener(ApplicationReadyEvent.class)
+	public void inicializador() {
+
+		try { importarCsv(); } 
+        catch (Exception e) { throw new RuntimeException(e); }
+
+	}
+
+	// ? Usa Resource para carregar o arquivo CSV 
+
+	public long importarCsv() {
 
 		Resource r = new ClassPathResource(CSV_PATH);
 

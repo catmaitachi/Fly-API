@@ -25,6 +25,7 @@ public class AeroportoService {
 
     public Optional<Aeroporto> buscar(String iata) { return repo.findByIata(iata); }
 
+    @SuppressWarnings("null") // Os DTOs garantem a existência antes de chamar
     public Aeroporto salvar(Aeroporto aeroporto) { return repo.save(aeroporto); }
 
     public Aeroporto atualizar(String iata, Aeroporto novo) {
@@ -45,6 +46,7 @@ public class AeroportoService {
 
     }
 
+    @SuppressWarnings("null") // Os DTOs garantem a existência antes de chamar
     public void deletar(String iata) { repo.findByIata(iata).ifPresent(aeroporto -> repo.delete(aeroporto)); }
 
 }
