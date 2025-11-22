@@ -32,7 +32,7 @@ public class AeroportoRequest {
     private String cidade;
 
     @NotBlank(message = "O código do país é obrigatório.")
-    @Size(min = 2, max = 2, message = "O código do país deve ter exatamente 2 caracteres.")
+    @Size(min = 2, max = 2, message = "O código do país deve ser no formato ISO2.")
     private String pais;
 
     @NotNull(message = "A latitude é obrigatória.")
@@ -42,7 +42,7 @@ public class AeroportoRequest {
     private double longitude;
 
     @NotNull(message = "A altitude é obrigatória.")
-    @Positive(message = "A altitude deve ser um número positivo.")
+    @Positive(message = "A altitude deve ser acima do nível do mar (0 metros).")
     private int altitude;
 
 }
