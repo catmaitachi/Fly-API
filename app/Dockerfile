@@ -1,4 +1,5 @@
 # Multi-stage build para Spring Boot
+
 # Etapa de build
 FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
@@ -16,6 +17,10 @@ COPY src src
 
 # Build do pacote (omitindo testes para velocidade – ajuste se quiser rodar testes)
 RUN ./mvnw -q package -DskipTests
+
+# Estágio dedicado para executar testes (falha interrompe o build)
+FROM build AS test
+RUN ./mvnw -q test
 
 # Etapa de runtime (imagem menor)
 FROM eclipse-temurin:25-jre AS runtime

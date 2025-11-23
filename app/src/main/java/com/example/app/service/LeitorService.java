@@ -11,6 +11,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.example.app.model.Aeroporto;
 import com.example.app.repository.AeroportoRepository;
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class LeitorService {
 
 	private static final String CSV_PATH = "data/airports.csv";
+	private static final Logger log = LoggerFactory.getLogger(LeitorService.class);
 
 	private final AeroportoRepository repo;
 
@@ -30,9 +33,13 @@ public class LeitorService {
 	@EventListener(ApplicationReadyEvent.class)
 	private void inicializador() {
 
-		try { importarCsv(); } 
-        catch (Exception e) { throw new RuntimeException(e); }
+		try {
 
+			long inseridos = importarCsv();
+			log.info("Importação de aeroportos concluída: {} registros inseridos", inseridos);
+		
+		} catch (Exception e) { log.error("Falha na importação do CSV de aeroportos", e); }
+	
 	}
 
 	// ? Usa Resource para carregar o arquivo CSV 
@@ -69,9 +76,13 @@ public class LeitorService {
 
 				if (p.length < 9) continue; 
 
-				// ? Ignora caso algum campo obrigatório seja inválido
+				// ? Se algum campo obrigatório for nulo, pula a linha inteira
 
-				for ( int i = 1 ; i < 9 ; i++ ) if ( safe(p , i) == null ) continue;
+				boolean invalida = false;
+
+				for ( int i = 1 ; i < 9 ; i++ ) { if ( safe(p , i) == null ) { invalida = true; break; } }
+
+				if (invalida) continue;
 
 				String nome = safe(p, 1);
 				String cidade = safe(p, 2);
@@ -81,6 +92,8 @@ public class LeitorService {
 				String lonStr = safe(p, 7);
 				String altStr = safe(p, 8);
 
+				if (iata == null) continue;
+				
 				String iataKey = iata.toUpperCase(Locale.ROOT);
 
 				// ? Verifica se o aeroporto já existe no repositório

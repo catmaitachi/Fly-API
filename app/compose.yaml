@@ -1,4 +1,14 @@
 services:
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    image: fly-api:test
+    # Container apenas para garantir execução dos testes no build; sai imediatamente
+    command: ["/bin/true"]
+    restart: "no"
+
   app:
     build:
       context: .
@@ -7,8 +17,11 @@ services:
     ports:
       - "8080:8080"
     depends_on:
+      tests:
+        condition: service_completed_successfully
       mysql:
         condition: service_healthy
+
 
   mysql:
     image: mysql:latest
