@@ -65,7 +65,7 @@ public class AeroportoController {
     private ResponseEntity<AeroportoResponse> atualizarAeroporto( @PathVariable String iata, @RequestBody @Valid AeroportoRequest r ) {
 
         Boolean exists = aeroportoService.existe(r.getIata());
-        if ( exists ) return ResponseEntity.badRequest().build();
+        if ( exists && !iata.equals(r.getIata()) ) return ResponseEntity.badRequest().build();
 
         Aeroporto novo = AeroportoMapper.toEntity(r);
         Aeroporto atualizado = aeroportoService.atualizar(iata, novo);
